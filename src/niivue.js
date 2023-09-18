@@ -2014,12 +2014,19 @@ Niivue.prototype.setHighResolutionCapable = function (isHighResolutionCapable) {
  * @see {@link https://niivue.github.io/niivue/features/document.3d.html|live demo usage}
  */
 Niivue.prototype.addVolume = function (volume) {
+  console.time("addVolume")
+  console.timeLog("addVolume","1")
   this.volumes.push(volume);
+  console.timeLog("addVolume","2")
   let idx = this.volumes.length === 1 ? 0 : this.volumes.length - 1;
+  console.timeLog("addVolume","3")
   this.setVolume(volume, idx);
+  console.timeLog("addVolume","4")
   this.onImageLoaded(volume);
+  console.timeLog("addVolume","5")
   log.debug("loaded volume", volume.name);
   log.debug(volume);
+  console.timeEnd("addVolume")
 };
 
 /**

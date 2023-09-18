@@ -285,6 +285,7 @@ export function NVImage(
   if (imageType === NVIMAGE_TYPE.UNKNOWN) {
     imageType = NVIMAGE_TYPE.parse(ext);
   }
+  console.timeLog("NVIMAGE","new 1")
 
   this.imageType = imageType;
 
@@ -326,15 +327,18 @@ export function NVImage(
       this.hdr = nifti.readHeader(dataBuffer);
       if (this.hdr.cal_min === 0 && this.hdr.cal_max === 255)
         this.hdr.cal_max = 0.0;
+      console.timeLog("NVIMAGE","new 1.5")
       if (nifti.isCompressed(dataBuffer)) {
         imgRaw = nifti.readImage(this.hdr, nifti.decompress(dataBuffer));
       } else {
         imgRaw = nifti.readImage(this.hdr, dataBuffer);
       }
+      console.timeLog("NVIMAGE","new 1.7")
       break;
     default:
-      throw new Error("Image type not supported");
+      throw new Error("Image type not supported");    
   }
+  console.timeLog("NVIMAGE","new 2")
   if (typeof this.hdr.magic == "number") this.hdr.magic = "n+1"; //fix for issue 481, where magic is set to the number 1 rather than a string
   this.nFrame4D = 1;
   for (let i = 4; i < 7; i++)
@@ -357,6 +361,7 @@ export function NVImage(
       );
     this.nFrame4D = nVol4D;
   }
+  console.timeLog("NVIMAGE","new 3")
   //1007 = NIFTI_INTENT_VECTOR; 2003 = NIFTI_INTENT_RGB_VECTOR
   // n.b. NIfTI standard says "NIFTI_INTENT_RGB_VECTOR" should be RGBA, but FSL only stores RGB
   if (
@@ -529,6 +534,7 @@ export function NVImage(
       }
     } //if 64-bits
   } //swap byte order
+  console.timeLog("NVIMAGE","new 4")
   switch (this.hdr.datatypeCode) {
     case this.DT_UNSIGNED_CHAR:
       this.img = new Uint8Array(imgRaw);
@@ -602,10 +608,15 @@ export function NVImage(
     default:
       throw "datatype " + this.hdr.datatypeCode + " not supported";
   }
+  console.timeLog("NVIMAGE","new 5")
   this.calculateRAS();
+  console.timeLog("NVIMAGE","new 5.2")
   if (!isNaN(cal_min)) this.hdr.cal_min = cal_min;
+  console.timeLog("NVIMAGE","new 5.3")
   if (!isNaN(cal_max)) this.hdr.cal_max = cal_max;
+  console.timeLog("NVIMAGE","new 5.5")
   this.calMinMax();
+  console.timeLog("NVIMAGE","new 6")
 }
 
 // not included in public docs
@@ -2749,6 +2760,8 @@ NVImage.loadFromUrl = async function ({
   limitFrames4D = NaN,
   imageType = NVIMAGE_TYPE.UNKNOWN,
 } = {}) {
+  console.time("NVIMAGE")
+  console.timeLog("NVIMAGE",1)
   if (url === "") {
     throw Error("url must not be empty");
   }
@@ -2759,8 +2772,9 @@ NVImage.loadFromUrl = async function ({
     //let response = await fetch(url, { headers: { range: "bytes=0-352" } });
     //NIfTI header first 352 bytes
     // however, GZip header might can add bloat https://en.wikipedia.org/wiki/Gzip
+
     let response = await this.fetchPartial(url, 512);
-    dataBuffer = await response.arrayBuffer();
+    dataBuffer = await response.arrayBuffer();    
     var bytes = new Uint8Array(dataBuffer);
     let isGz = false;
     if (bytes[0] === 31 && bytes[1] === 139) {
@@ -2802,6 +2816,7 @@ NVImage.loadFromUrl = async function ({
       else dataBuffer = dataBuffer.slice(0, bytesToLoad);
     } //if isNifti1
   }
+  console.timeLog("NVIMAGE",3)
   if (dataBuffer) {
     //
   } else if (isManifest) {
@@ -2809,12 +2824,14 @@ NVImage.loadFromUrl = async function ({
     imageType = NVIMAGE_TYPE.DCM_MANIFEST;
   } else {
     let response = await fetch(url);
+    console.timeLog("NVIMAGE",4)
     if (!response.ok) {
       throw Error(response.statusText);
     }
+    console.timeLog("NVIMAGE",5)
     dataBuffer = await response.arrayBuffer();
   }
-
+  console.timeLog("NVIMAGE",9)
   var re = /(?:\.([^.]+))?$/;
   let ext = "";
   if (name === "") {
@@ -2845,18 +2862,21 @@ NVImage.loadFromUrl = async function ({
       name = name.slice(0, name.indexOf("?")); //remove query string if any
     }
   }
-
+  console.timeLog("NVIMAGE",9.5)
   let pairedImgData = null;
   if (urlImgData.length > 0) {
     let resp = await fetch(urlImgData);
+    console.timeLog("NVIMAGE",9.6)
     if (resp.status === 404) {
       if (urlImgData.lastIndexOf("BRIK") !== -1) {
         resp = await fetch(urlImgData + ".gz");
       }
     }
     pairedImgData = await resp.arrayBuffer();
+    console.timeLog("NVIMAGE",9.7)
   }
   if (dataBuffer) {
+    console.timeLog("NVIMAGE",9.8)
     nvimage = new NVImage(
       dataBuffer,
       name,
@@ -2878,7 +2898,8 @@ NVImage.loadFromUrl = async function ({
   } else {
     alert("Unable to load buffer properly from volume");
   }
-
+  console.timeLog("NVIMAGE",10)
+  console.timeEnd("NVIMAGE")
   return nvimage;
 };
 
